@@ -1,5 +1,7 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect } from 'react';
+import type { FormEvent } from 'react';
 import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import type { Task, Priority, Status, Category } from '../types';
 
@@ -49,7 +51,7 @@ export default function TaskForm({ task, onClose, onSave }: TaskFormProps) {
     color: 'var(--color-text-primary)'
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
       <div 
         className="w-full max-w-lg overflow-hidden rounded-2xl shadow-2xl animate-slide-up"
@@ -78,7 +80,7 @@ export default function TaskForm({ task, onClose, onSave }: TaskFormProps) {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                className="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors"
                 style={inputStyle}
                 placeholder="What needs to be done?"
               />
@@ -192,14 +194,15 @@ export default function TaskForm({ task, onClose, onSave }: TaskFormProps) {
             <button
               type="submit"
               disabled={!title.trim()}
-              className="rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition-opacity disabled:opacity-50"
-              style={{ background: 'linear-gradient(135deg, #4f6ef7 0%, #7b93f8 100%)' }}
+              className="rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition-all active:scale-95 disabled:opacity-50"
+              style={{ backgroundColor: 'var(--color-accent)', boxShadow: '0 2px 8px rgba(74,107,83,0.25)' }}
             >
               Save Task
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,5 +1,6 @@
-import { createContext, useContext, useReducer, useEffect, ReactNode, useCallback } from 'react';
-import type { AppState, AppActions, Task, Priority, Status, Category, MoodLevel, ViewMode, Theme, NavSection } from './types';
+import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import type { ReactNode } from 'react';
+import type { AppState, AppActions, Task, MoodLevel, ViewMode, Theme, NavSection } from './types';
 import { generateInitialState } from './mockData';
 
 const STORAGE_KEY = 'life-dashboard-state';

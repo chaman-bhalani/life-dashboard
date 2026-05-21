@@ -87,9 +87,9 @@ export default function CategoryBreakdown() {
                 boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
               }}
               itemStyle={{ color: 'var(--tooltip-text)' }}
-              formatter={(value: number, name: string) => [
-                `${value} task${value !== 1 ? 's' : ''}`,
-                name,
+              formatter={(value: any, name: any) => [
+                `${value as number} task${(value as number) !== 1 ? 's' : ''}`,
+                name as string,
               ]}
             />
           </PieChart>

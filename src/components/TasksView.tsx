@@ -1,113 +1,178 @@
-import { useState, useMemo } from 'react';
-import { LayoutList, Kanban, Plus, Search, CheckCircle2 } from 'lucide-react';
+import { useState, useMemo, useRef, useCallback } from 'react';
+import {
+  LayoutList, LayoutGrid, Kanban as KanbanIcon,
+  Plus, Search, Send, Tag, CalendarDays, Zap, CheckCircle2,
+} from 'lucide-react';
 import clsx from 'clsx';
 import { useStore } from '../store';
-import type { Task, Status, Priority, Category, ViewMode } from '../types';
-import TaskList from './TaskList';
-import KanbanBoard from './KanbanBoard';
-import TaskForm from './TaskForm';
+import type { Task, Status, Priority, Category } from '../types';
+import TaskList   from './TaskList';
+import KanbanView from './KanbanView';
+import TaskForm   from './TaskForm';
+
+// ─── Priority colour for Zap icon in quick-bar ─────────────────────────────
+const PRIORITY_COLORS: Record<Priority, string> = {
+  high: '#EF4444', medium: '#F59E0B', low: '#10B981',
+};
 
 export default function TasksView() {
   const { state, actions } = useStore();
-  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const [isFormOpen,  setIsFormOpen]  = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>();
 
-  const [statusFilter, setStatusFilter] = useState<Status | 'all'>('all');
+  // ─── Filters ──────────────────────────────────────────────
+  const [statusFilter,   setStatusFilter]   = useState<Status   | 'all'>('all');
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery,    setSearchQuery]    = useState('');
 
-  const filteredTasks = useMemo(() => {
-    return state.tasks.filter((task) => {
-      const matchStatus = statusFilter === 'all' || task.status === statusFilter;
-      const matchPriority = priorityFilter === 'all' || task.priority === priorityFilter;
-      const matchCategory = categoryFilter === 'all' || task.category === categoryFilter;
-      const matchSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          task.description.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      return matchStatus && matchPriority && matchCategory && matchSearch;
-    }).sort((a, b) => {
-      // Sort by due date
-      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-    });
-  }, [state.tasks, statusFilter, priorityFilter, categoryFilter, searchQuery]);
+  // ─── Quick-Add bar state ───────────────────────────────────
+  const [quickTitle,    setQuickTitle]    = useState('');
+  const [quickPriority, setQuickPriority] = useState<Priority>('medium');
+  const [quickCategory, setQuickCategory] = useState<Category>('Work');
+  const [quickDueDate,  setQuickDueDate]  = useState(() => new Date().toISOString().split('T')[0]);
+  const [quickFocused,  setQuickFocused]  = useState(false);
+  const quickInputRef = useRef<HTMLInputElement>(null);
+  const quickDateInputRef = useRef<HTMLInputElement>(null);
 
-  const handleEdit = (task: Task) => {
-    setEditingTask(task);
-    setIsFormOpen(true);
-  };
+  // ─── Filtered + sorted tasks ───────────────────────────────
+  const filteredTasks = useMemo(() =>
+    state.tasks
+      .filter((t) => {
+        if (statusFilter   !== 'all' && t.status   !== statusFilter)   return false;
+        if (priorityFilter !== 'all' && t.priority !== priorityFilter) return false;
+        if (categoryFilter !== 'all' && t.category !== categoryFilter) return false;
+        const q = searchQuery.toLowerCase();
+        return t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q);
+      })
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()),
+    [state.tasks, statusFilter, priorityFilter, categoryFilter, searchQuery]
+  );
 
-  const handleCreate = () => {
-    setEditingTask(undefined);
-    setIsFormOpen(true);
-  };
+  // ─── Handlers ──────────────────────────────────────────────
+  const handleEdit   = useCallback((task: Task) => { setEditingTask(task); setIsFormOpen(true); }, []);
+  const handleCreate = useCallback(() => { setEditingTask(undefined); setIsFormOpen(true); }, []);
 
-  const handleSave = (taskData: Omit<Task, 'id' | 'createdAt'>) => {
-    if (editingTask) {
-      actions.updateTask(editingTask.id, taskData);
-    } else {
-      actions.addTask(taskData);
+  const handleSave = useCallback((taskData: Omit<Task, 'id' | 'createdAt'>) => {
+    if (editingTask) actions.updateTask(editingTask.id, taskData);
+    else             actions.addTask(taskData);
+  }, [editingTask, actions]);
+
+  const handleToggleComplete = useCallback((id: string) => {
+    const task = state.tasks.find((t) => t.id === id);
+    if (!task) return;
+    actions.updateTask(id, { status: task.status === 'completed' ? 'todo' : 'completed' });
+  }, [state.tasks, actions]);
+
+  const handleMove = useCallback((id: string, newStatus: Status) => {
+    actions.updateTask(id, { status: newStatus });
+  }, [actions]);
+
+  const handleDatePillClick = useCallback(() => {
+    if (quickDateInputRef.current) {
+      try {
+        if (typeof quickDateInputRef.current.showPicker === 'function') {
+          quickDateInputRef.current.showPicker();
+        } else {
+          quickDateInputRef.current.click();
+        }
+      } catch (err) {
+        quickDateInputRef.current.focus();
+      }
     }
+  }, []);
+
+  const handleQuickAdd = useCallback(() => {
+    if (!quickTitle.trim()) { quickInputRef.current?.focus(); return; }
+    actions.addTask({
+      title:         quickTitle.trim(),
+      description:   '',
+      priority:      quickPriority,
+      category:      quickCategory,
+      dueDate:       quickDueDate,
+      estimatedTime: 30,
+      status:        'todo',
+    });
+    setQuickTitle('');
+    setQuickPriority('medium');
+    setQuickCategory('Work');
+    setQuickDueDate(new Date().toISOString().split('T')[0]);
+  }, [quickTitle, quickPriority, quickCategory, quickDueDate, actions]);
+
+  // Shared style for filter controls
+  const ctrlStyle = {
+    backgroundColor: 'var(--color-surface-2)',
+    borderColor:     'var(--color-border-subtle)',
+    color:           'var(--color-text-primary)',
   };
 
-  const inputStyle = {
-    backgroundColor: 'var(--color-surface-2)',
-    borderColor: 'var(--color-border-subtle)',
-    color: 'var(--color-text-primary)'
-  };
+  const viewMode = state.taskViewMode;
 
   return (
-    <div className="animate-slide-up space-y-6">
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="animate-slide-up space-y-5">
+
+      {/* ─── Page Header ──────────────────────────────── */}
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10">
-            <CheckCircle2 className="h-6 w-6 text-violet-500" />
+          <div
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: 'var(--color-accent-soft)' }}
+          >
+            <CheckCircle2 className="h-6 w-6" style={{ color: 'var(--color-accent)' }} />
           </div>
           <div>
             <h1 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
               Tasks
             </h1>
-            <p className="mt-1 text-base font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="mt-0.5 text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
               Manage your workload
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center rounded-lg p-1" style={{ backgroundColor: 'var(--color-surface-2)' }}>
-            <button
-              onClick={() => actions.setTaskViewMode('list')}
-              className={clsx(
-                'flex h-9 w-9 items-center justify-center rounded-md transition-all',
-                state.taskViewMode === 'list' ? 'shadow-sm' : 'opacity-60 hover:opacity-100'
-              )}
-              style={{
-                backgroundColor: state.taskViewMode === 'list' ? 'var(--color-surface-1)' : 'transparent',
-                color: state.taskViewMode === 'list' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'
-              }}
-              aria-label="List View"
-            >
-              <LayoutList className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => actions.setTaskViewMode('kanban')}
-              className={clsx(
-                'flex h-9 w-9 items-center justify-center rounded-md transition-all',
-                state.taskViewMode === 'kanban' ? 'shadow-sm' : 'opacity-60 hover:opacity-100'
-              )}
-              style={{
-                backgroundColor: state.taskViewMode === 'kanban' ? 'var(--color-surface-1)' : 'transparent',
-                color: state.taskViewMode === 'kanban' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'
-              }}
-              aria-label="Kanban View"
-            >
-              <Kanban className="h-4 w-4" />
-            </button>
+          {/* ─── View Mode Toggle ─── */}
+          <div
+            className="flex items-center rounded-xl p-1"
+            style={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-border-subtle)' }}
+          >
+            {(
+              [
+                { mode: 'list',   Icon: LayoutList,  label: 'List View'   },
+                { mode: 'grid',   Icon: LayoutGrid,  label: 'Grid View'   },
+                { mode: 'kanban', Icon: KanbanIcon,  label: 'Kanban View' },
+              ] as const
+            ).map(({ mode, Icon, label }) => (
+              <button
+                key={mode}
+                id={`view-toggle-${mode}`}
+                onClick={() => actions.setTaskViewMode(mode)}
+                aria-label={`Switch to ${label}`}
+                aria-pressed={viewMode === mode}
+                title={label}
+                className={clsx(
+                  'flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-200',
+                  viewMode === mode ? 'shadow-sm' : 'opacity-40 hover:opacity-70'
+                )}
+                style={{
+                  backgroundColor: viewMode === mode ? 'var(--color-surface-1)' : 'transparent',
+                  color:           viewMode === mode ? 'var(--color-accent)'    : 'var(--color-text-secondary)',
+                }}
+              >
+                <Icon className="h-4 w-4" />
+              </button>
+            ))}
           </div>
+
+          {/* ─── New Task Button ─── */}
           <button
+            id="new-task-btn"
             onClick={handleCreate}
-            className="flex h-11 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90 shadow-sm"
-            style={{ background: 'linear-gradient(135deg, #4f6ef7 0%, #7b93f8 100%)' }}
+            className="flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-white transition-all active:scale-95"
+            style={{ backgroundColor: 'var(--color-accent)', boxShadow: '0 2px 8px rgba(74,107,83,0.25)' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-accent-hover)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-accent)'; }}
           >
             <Plus className="h-4 w-4" />
             New Task
@@ -115,99 +180,234 @@ export default function TasksView() {
         </div>
       </header>
 
-      {/* Filters */}
+      {/* ─── Filters ──────────────────────────────────── */}
       <div className="nb-card p-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search */}
+          <div className="relative min-w-[200px] flex-1">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+              style={{ color: 'var(--color-text-muted)' }}
+            />
             <input
               type="text"
-              placeholder="Search tasks..."
+              placeholder="Search tasks…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border pl-10 pr-4 py-2.5 text-sm outline-none transition-colors"
-              style={inputStyle}
+              className="w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm outline-none transition-colors"
+              style={ctrlStyle}
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as Status | 'all')}
-              className="rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors appearance-none cursor-pointer"
-              style={{ ...inputStyle, paddingRight: '2.5rem' }}
-            >
-              <option value="all">All Statuses</option>
-              <option value="todo">To Do</option>
-              <option value="in-progress">In Progress</option>
-              <option value="completed">Completed</option>
-            </select>
-
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value as Priority | 'all')}
-              className="rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors appearance-none cursor-pointer"
-              style={{ ...inputStyle, paddingRight: '2.5rem' }}
-            >
-              <option value="all">All Priorities</option>
-              <option value="low">Low Priority</option>
-              <option value="medium">Medium Priority</option>
-              <option value="high">High Priority</option>
-            </select>
-
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value as Category | 'all')}
-              className="rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors appearance-none cursor-pointer"
-              style={{ ...inputStyle, paddingRight: '2.5rem' }}
-            >
-              <option value="all">All Categories</option>
-              <option value="Work">Work</option>
-              <option value="Personal">Personal</option>
-              <option value="Health">Health</option>
-              <option value="Learning">Learning</option>
-              <option value="Finance">Finance</option>
-            </select>
+          {/* Dropdowns */}
+          <div className="flex flex-wrap items-center gap-2">
+            {(
+              [
+                {
+                  value: statusFilter, onChange: (v: string) => setStatusFilter(v as Status | 'all'),
+                  options: [
+                    { value: 'all',         label: 'All Statuses'  },
+                    { value: 'todo',        label: 'To Do'         },
+                    { value: 'in-progress', label: 'In Progress'   },
+                    { value: 'completed',   label: 'Completed'     },
+                  ],
+                },
+                {
+                  value: priorityFilter, onChange: (v: string) => setPriorityFilter(v as Priority | 'all'),
+                  options: [
+                    { value: 'all',    label: 'All Priorities' },
+                    { value: 'low',    label: 'Low'            },
+                    { value: 'medium', label: 'Medium'         },
+                    { value: 'high',   label: 'High'           },
+                  ],
+                },
+                {
+                  value: categoryFilter, onChange: (v: string) => setCategoryFilter(v as Category | 'all'),
+                  options: [
+                    { value: 'all',      label: 'All Categories' },
+                    { value: 'Work',     label: 'Work'           },
+                    { value: 'Personal', label: 'Personal'       },
+                    { value: 'Health',   label: 'Health'         },
+                    { value: 'Learning', label: 'Learning'       },
+                    { value: 'Finance',  label: 'Finance'        },
+                  ],
+                },
+              ] as const
+            ).map((sel, i) => (
+              <select
+                key={i}
+                value={sel.value}
+                onChange={(e) => (sel.onChange as (v: string) => void)(e.target.value)}
+                className="cursor-pointer appearance-none rounded-xl border px-3 py-2.5 text-sm outline-none transition-colors"
+                style={ctrlStyle}
+              >
+                {sel.options.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            ))}
 
             {(statusFilter !== 'all' || priorityFilter !== 'all' || categoryFilter !== 'all' || searchQuery) && (
               <button
-                onClick={() => {
-                  setStatusFilter('all');
-                  setPriorityFilter('all');
-                  setCategoryFilter('all');
-                  setSearchQuery('');
-                }}
-                className="text-xs font-semibold hover:underline"
+                onClick={() => { setStatusFilter('all'); setPriorityFilter('all'); setCategoryFilter('all'); setSearchQuery(''); }}
+                className="rounded-lg px-2 py-1 text-xs font-semibold hover:underline"
                 style={{ color: 'var(--color-accent)' }}
               >
-                Clear Filters
+                Clear
               </button>
             )}
           </div>
         </div>
       </div>
 
-      <div className="pt-2">
-        <div className="mb-4 text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-          Showing {filteredTasks.length} task{filteredTasks.length !== 1 && 's'}
-        </div>
-
-        {state.taskViewMode === 'list' ? (
-          <TaskList
-            tasks={filteredTasks}
-            onEdit={handleEdit}
-            onComplete={(id) => actions.updateTask(id, { status: 'completed' })}
-            onDelete={(id) => actions.deleteTask(id)}
-          />
-        ) : (
-          <KanbanBoard
-            tasks={filteredTasks}
-            onMove={(id, status) => actions.updateTask(id, { status })}
-            onEdit={handleEdit}
-          />
-        )}
+      {/* ─── Task count + view label ───────────────────── */}
+      <div className="flex items-center justify-between px-1">
+        <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+          {filteredTasks.length} task{filteredTasks.length !== 1 && 's'}
+        </span>
+        <span className="text-xs capitalize" style={{ color: 'var(--color-text-muted)' }}>
+          {viewMode} view
+        </span>
       </div>
 
+      {/* ─── Task Content Area ────────────────────────── */}
+      {viewMode === 'kanban' ? (
+        <KanbanView
+          tasks={filteredTasks}
+          onEdit={handleEdit}
+          onDelete={(id) => actions.deleteTask(id)}
+          onMove={handleMove}
+        />
+      ) : (
+        <TaskList
+          tasks={filteredTasks}
+          viewMode={viewMode}
+          onEdit={handleEdit}
+          onComplete={handleToggleComplete}
+          onDelete={(id) => actions.deleteTask(id)}
+        />
+      )}
+
+      {/* ─── Floating Quick-Add Bar ───────────────────── */}
+      {/*
+        Key layout fix: use a fixed-width pill (min/max constrained) with
+        flex-row. The title input has flex-1 min-w-0 to shrink. Controls
+        are wrapped in a flex-shrink-0 container so they never get clipped.
+        The date input has a fixed width so the browser picker aligns correctly.
+      */}
+      <div
+        className={clsx(
+          'floating-input-bar',
+          quickFocused && 'floating-input-bar--focused'
+        )}
+        // Stop click from bubbling in case it's inside a scroll container
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Title — flex-1 min-w-0 so it shrinks gracefully */}
+        <input
+          ref={quickInputRef}
+          id="quick-add-input"
+          type="text"
+          placeholder="Quick-add a task…"
+          value={quickTitle}
+          onChange={(e) => setQuickTitle(e.target.value)}
+          onFocus={() => setQuickFocused(true)}
+          onBlur={() => setQuickFocused(false)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleQuickAdd(); }}
+          className="min-w-0 flex-1 bg-transparent text-sm font-medium outline-none placeholder:font-normal"
+          style={{ color: 'var(--color-text-primary)' }}
+        />
+
+        {/* Inline controls — shrink-0 so they never clip */}
+        <div
+          className={clsx(
+            'flex shrink-0 items-center gap-1.5 transition-all duration-200',
+            quickFocused || quickTitle
+              ? 'pointer-events-auto translate-x-0 opacity-100'
+              : 'pointer-events-none translate-x-3 opacity-0'
+          )}
+        >
+          {/* Priority */}
+          <label className="quick-chip" style={{ backgroundColor: 'var(--color-accent-soft)' }}>
+            <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: PRIORITY_COLORS[quickPriority] }} />
+            <select
+              value={quickPriority}
+              onChange={(e) => setQuickPriority(e.target.value as Priority)}
+              onFocus={() => setQuickFocused(true)}
+              onBlur={() => setQuickFocused(false)}
+              className="cursor-pointer appearance-none bg-transparent text-[11px] font-semibold outline-none"
+              style={{ color: PRIORITY_COLORS[quickPriority] }}
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+
+          {/* Category */}
+          <label className="quick-chip" style={{ backgroundColor: 'var(--color-surface-2)' }}>
+            <Tag className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--color-text-muted)' }} />
+            <select
+              value={quickCategory}
+              onChange={(e) => setQuickCategory(e.target.value as Category)}
+              onFocus={() => setQuickFocused(true)}
+              onBlur={() => setQuickFocused(false)}
+              className="cursor-pointer appearance-none bg-transparent text-[11px] font-semibold outline-none"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              <option>Work</option>
+              <option>Personal</option>
+              <option>Health</option>
+              <option>Learning</option>
+              <option>Finance</option>
+            </select>
+          </label>
+
+          {/* Due date
+              - Fixed width avoids the native date picker from
+                overflowing its pill parent.
+              - color-scheme forces the native picker chrome to
+                match the app theme on supported browsers.
+          */}
+          <label
+            onClick={handleDatePillClick}
+            className="quick-chip cursor-pointer"
+            style={{ backgroundColor: 'var(--color-surface-2)' }}
+          >
+            <CalendarDays className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--color-text-muted)' }} />
+            <input
+              ref={quickDateInputRef}
+              type="date"
+              value={quickDueDate}
+              onChange={(e) => setQuickDueDate(e.target.value)}
+              onFocus={() => setQuickFocused(true)}
+              onBlur={() => setQuickFocused(false)}
+              className="w-[84px] cursor-pointer bg-transparent text-[11px] font-semibold outline-none"
+              style={{
+                color:       'var(--color-text-secondary)',
+                colorScheme: 'light dark',
+              }}
+            />
+          </label>
+        </div>
+
+        {/* Send button — always visible but dims when no title */}
+        <button
+          id="quick-add-submit"
+          onClick={handleQuickAdd}
+          title="Add task (Enter)"
+          className={clsx(
+            'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white',
+            'transition-all duration-200 active:scale-90',
+            quickTitle.trim() ? 'opacity-100' : 'cursor-default opacity-35'
+          )}
+          style={{ backgroundColor: 'var(--color-accent)' }}
+        >
+          <Send className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Task Form Modal */}
       {isFormOpen && (
         <TaskForm
           task={editingTask}

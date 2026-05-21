@@ -7,7 +7,7 @@ import {
   Moon,
   PanelLeftClose,
   PanelLeft,
-  Sparkles,
+  Leaf,
 } from 'lucide-react';
 import { useStore } from '../store';
 import type { NavSection } from '../types';
@@ -15,9 +15,9 @@ import clsx from 'clsx';
 
 const navItems: { id: NavSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'tasks', label: 'Tasks', icon: ListTodo },
+  { id: 'tasks',     label: 'Tasks',     icon: ListTodo },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-  { id: 'quicklog', label: 'Quick Log', icon: BookOpen },
+  { id: 'quicklog',  label: 'Quick Log', icon: BookOpen },
 ];
 
 export default function Sidebar() {
@@ -29,7 +29,7 @@ export default function Sidebar() {
       className={clsx(
         'fixed left-0 top-0 z-40 flex h-full flex-col transition-all duration-300 ease-in-out',
         'border-r',
-        sidebarCollapsed ? 'w-[68px]' : 'w-[232px]'
+        sidebarCollapsed ? 'w-[68px]' : 'w-[228px]'
       )}
       style={{
         backgroundColor: 'var(--color-surface-1)',
@@ -37,14 +37,16 @@ export default function Sidebar() {
       }}
     >
       {/* Logo */}
-      <div className="flex h-[60px] items-center gap-2.5 px-4">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-          style={{ background: 'linear-gradient(135deg, #4f6ef7 0%, #7b93f8 100%)' }}
+      <div className="flex h-[60px] items-center gap-3 px-4">
+        <div
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
+          style={{ backgroundColor: 'var(--color-accent)', boxShadow: '0 2px 8px rgba(74,107,83,0.3)' }}
         >
-          <Sparkles className="h-4 w-4 text-white" />
+          <Leaf className="h-4 w-4 text-white" />
         </div>
         {!sidebarCollapsed && (
-          <span className="text-[15px] font-semibold tracking-tight"
+          <span
+            className="text-[15px] font-semibold tracking-tight"
             style={{ color: 'var(--color-text-primary)' }}
           >
             LifeFlow
@@ -52,8 +54,17 @@ export default function Sidebar() {
         )}
       </div>
 
+      {/* Section label */}
+      {!sidebarCollapsed && (
+        <div className="px-4 pt-3 pb-1">
+          <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+            Navigation
+          </span>
+        </div>
+      )}
+
       {/* Nav */}
-      <nav className="flex-1 space-y-0.5 px-2 pt-2" role="navigation" aria-label="Main navigation">
+      <nav className="flex-1 space-y-0.5 px-2 pt-1" role="navigation" aria-label="Main navigation">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeSection === item.id;
@@ -63,7 +74,7 @@ export default function Sidebar() {
               onClick={() => actions.setActiveSection(item.id)}
               aria-current={isActive ? 'page' : undefined}
               className={clsx(
-                'group flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium transition-all duration-150',
+                'group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-150',
                 sidebarCollapsed && 'justify-center px-0'
               )}
               style={{
@@ -73,7 +84,7 @@ export default function Sidebar() {
               onMouseEnter={(e) => {
                 if (!isActive) {
                   e.currentTarget.style.backgroundColor = 'var(--color-accent-soft)';
-                  e.currentTarget.style.color = 'var(--color-text-primary)';
+                  e.currentTarget.style.color = 'var(--color-accent-hover)';
                 }
               }}
               onMouseLeave={(e) => {
@@ -83,19 +94,32 @@ export default function Sidebar() {
                 }
               }}
             >
-              <Icon className="h-[18px] w-[18px] shrink-0" />
+              <Icon
+                className={clsx('h-[18px] w-[18px] shrink-0 transition-colors')}
+                style={{ color: isActive ? 'var(--color-accent)' : undefined }}
+              />
               {!sidebarCollapsed && <span>{item.label}</span>}
+              {/* Active bar indicator */}
+              {isActive && !sidebarCollapsed && (
+                <span
+                  className="ml-auto h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: 'var(--color-accent)' }}
+                />
+              )}
             </button>
           );
         })}
       </nav>
 
-      {/* Bottom */}
-      <div className="space-y-0.5 px-2 pb-4 pt-2" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+      {/* Bottom Actions */}
+      <div
+        className="space-y-0.5 px-2 pb-4 pt-2"
+        style={{ borderTop: '1px solid var(--color-border-subtle)' }}
+      >
         <button
           onClick={() => actions.setTheme(theme === 'dark' ? 'light' : 'dark')}
           className={clsx(
-            'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium transition-all duration-150',
+            'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-150',
             sidebarCollapsed && 'justify-center px-0'
           )}
           style={{ color: 'var(--color-text-secondary)' }}
@@ -122,7 +146,7 @@ export default function Sidebar() {
         <button
           onClick={() => actions.setSidebarCollapsed(!sidebarCollapsed)}
           className={clsx(
-            'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium transition-all duration-150',
+            'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-150',
             sidebarCollapsed && 'justify-center px-0'
           )}
           style={{ color: 'var(--color-text-secondary)' }}

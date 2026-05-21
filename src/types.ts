@@ -1,7 +1,7 @@
 export type Priority = 'low' | 'medium' | 'high';
 export type Status = 'todo' | 'in-progress' | 'completed';
 export type Category = 'Work' | 'Personal' | 'Health' | 'Learning' | 'Finance';
-export type ViewMode = 'list' | 'kanban';
+export type ViewMode = 'list' | 'grid' | 'kanban';
 export type Theme = 'light' | 'dark';
 export type NavSection = 'dashboard' | 'tasks' | 'analytics' | 'quicklog';
 export type MoodLevel = 1 | 2 | 3 | 4 | 5;

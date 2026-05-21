@@ -73,10 +73,10 @@ function ActivityChart() {
               }}
               itemStyle={{ color: 'var(--tooltip-text)', fontWeight: 500 }}
               labelStyle={{ color: 'var(--color-text-muted)', marginBottom: '4px' }}
-              formatter={(value: number) => [value, 'Tasks Completed']}
-              labelFormatter={(label: string, payload: any[]) => {
+              formatter={(value: any) => [value as number, 'Tasks Completed']}
+              labelFormatter={(label: any, payload: readonly any[]) => {
                 if (payload && payload.length > 0) {
-                  const dateStr = payload[0].payload.date;
+                  const dateStr = (payload[0] as any).payload.date;
                   return format(new Date(dateStr), 'EEEE, MMM do');
                 }
                 return label;
@@ -87,7 +87,7 @@ function ActivityChart() {
               radius={[6, 6, 6, 6]}
               maxBarSize={40}
             >
-              {chartData.map((entry, index) => (
+              {chartData.map((_entry, index) => (
                 <Cell key={`cell-${index}`} fill="var(--color-accent)" />
               ))}
             </Bar>

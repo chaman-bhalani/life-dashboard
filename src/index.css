@@ -1,34 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Text:wght@400;500;600;700&family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: 'Google Sans', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: 'Google Sans Text', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-  /* NotebookLM-inspired palette */
-  --color-surface-0: #f8f9fb;
-  --color-surface-1: #ffffff;
-  --color-surface-2: #f1f3f5;
-  --color-border-subtle: #e2e5e9;
-  --color-text-primary: #1a1a2e;
-  --color-text-secondary: #5f6368;
-  --color-text-muted: #9aa0a6;
-  --color-accent: #4f6ef7;
-  --color-accent-soft: rgba(79, 110, 247, 0.08);
+  /* NotebookLM Organic Earth & Sage Green Palette — Light */
+  --color-surface-0: #F9F9F6;
+  --color-surface-1: #FFFFFF;
+  --color-surface-2: #F2F2EF;
+  --color-border-subtle: rgba(0, 0, 0, 0.06);
+  --color-text-primary: #1E2320;
+  --color-text-secondary: #6B7280;
+  --color-text-muted: #9CA3AF;
+
+  /* Sage Green Accent */
+  --color-accent: #4A6B53;
+  --color-accent-hover: #5F856C;
+  --color-accent-soft: #E8EFEA;
+  --color-accent-tint: rgba(74, 107, 83, 0.10);
 }
 
-/* Dark overrides */
+/* Dark Mode Overrides */
 .dark {
-  --color-surface-0: #0e0e14;
-  --color-surface-1: #16161f;
-  --color-surface-2: #1e1e2a;
-  --color-border-subtle: #2a2a3a;
-  --color-text-primary: #e8eaed;
-  --color-text-secondary: #9aa0a6;
-  --color-text-muted: #5f6368;
-  --color-accent: #7b93f8;
-  --color-accent-soft: rgba(123, 147, 248, 0.1);
+  --color-surface-0: #141A16;
+  --color-surface-1: #1E2721;
+  --color-surface-2: #252C28;
+  --color-border-subtle: rgba(255, 255, 255, 0.07);
+  --color-text-primary: #E8EFEA;
+  --color-text-secondary: #9AAA9D;
+  --color-text-muted: #607268;
+  --color-accent: #8FB996;
+  --color-accent-hover: #A8CCAD;
+  --color-accent-soft: rgba(143, 185, 150, 0.12);
+  --color-accent-tint: rgba(143, 185, 150, 0.08);
 }
 
 /* Base */
@@ -39,79 +46,201 @@ html {
 body {
   background-color: var(--color-surface-0);
   color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* Smooth Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: var(--color-border-subtle);
-  border-radius: 10px;
+  border-radius: 99px;
 }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
 
-/* Animations */
+/* ─── Animations ──────────────────────────────────── */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up { animation: slide-up 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade-in { animation: fade-in 0.25s ease forwards; }
+
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.35); }
-  50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
+  50%       { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
 }
-.animate-pulse-glow {
-  animation: pulse-glow 2.5s ease-in-out infinite;
-}
+.animate-pulse-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
 
 @keyframes check-pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.25); }
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.22); }
   100% { transform: scale(1); }
 }
-.animate-check-pop {
-  animation: check-pop 0.25s ease-out;
-}
+.animate-check-pop { animation: check-pop 0.25s ease-out; }
 
 @keyframes fade-in-out {
-  0% { opacity: 0; transform: translateY(4px); }
-  15% { opacity: 1; transform: translateY(0); }
-  85% { opacity: 1; transform: translateY(0); }
+  0%   { opacity: 0; transform: translateY(4px); }
+  15%  { opacity: 1; transform: translateY(0); }
+  85%  { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-4px); }
 }
-.animate-saved {
-  animation: fade-in-out 2s ease-in-out forwards;
-}
+.animate-saved { animation: fade-in-out 2s ease-in-out forwards; }
 
-@keyframes slide-up {
-  0% { opacity: 0; transform: translateY(12px); }
-  100% { opacity: 1; transform: translateY(0); }
+@keyframes float-up {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-.animate-slide-up {
-  animation: slide-up 0.3s ease-out forwards;
-}
+.animate-float-up { animation: float-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
-/* Card base style */
+/* ─── Base Card ──────────────────────────────────── */
 .nb-card {
   background-color: var(--color-surface-1);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 16px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 8px 24px rgba(0, 0, 0, 0.03);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 .nb-card:hover {
-  border-color: color-mix(in srgb, var(--color-accent) 25%, var(--color-border-subtle));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 12px 32px rgba(0, 0, 0, 0.05);
 }
 
-/* Recharts tooltip styling */
+/* ─── Task Card (Grid View) ─────────────────────── */
+.task-card-grid {
+  background-color: var(--color-surface-1);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 16px rgba(0, 0, 0, 0.04);
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.2s ease;
+  cursor: pointer;
+  overflow: hidden;
+}
+.task-card-grid:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07), 0 20px 48px rgba(0, 0, 0, 0.07);
+}
+
+/* ─── Task Row (List View) ─────────────────────── */
+.task-row {
+  background-color: var(--color-surface-1);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 14px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.task-row:hover {
+  background-color: var(--color-accent-soft);
+  border-color: rgba(74, 107, 83, 0.15);
+  box-shadow: 0 2px 12px rgba(74, 107, 83, 0.06);
+}
+.dark .task-row:hover {
+  background-color: var(--color-surface-2);
+  border-color: rgba(143, 185, 150, 0.18);
+}
+
+/* ─── Notebook Cover Gradients (Category Banners) */
+.cover-work     { background: linear-gradient(135deg, #6B8F71 0%, #A8BBA3 60%, #C8D5C4 100%); }
+.cover-personal { background: linear-gradient(135deg, #C4956A 0%, #D4A57A 60%, #E8C9A0 100%); }
+.cover-health   { background: linear-gradient(135deg, #5B8C6A 0%, #7DAD89 60%, #A8C9AF 100%); }
+.cover-learning { background: linear-gradient(135deg, #8B7355 0%, #B09070 60%, #CDB897 100%); }
+.cover-finance  { background: linear-gradient(135deg, #5A6E7F 0%, #7A92A3 60%, #A3B8C4 100%); }
+
+/* ─── Floating Bottom Input Bar ──────────────────── */
+/*
+  Layout fix:
+  • The bar itself is a flex row with NO overflow:hidden so the
+    native date picker popup can escape its bounds.
+  • The title input gets flex:1 + min-width:0 so it can shrink.
+  • Controls are in a shrink-0 wrapper — they never get clipped.
+*/
+.floating-input-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  /* Responsive width: fills narrow screens, caps at 740px on wide ones */
+  width: min(740px, calc(100vw - 32px));
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.06);
+  /* Tight horizontal padding so chips don't overflow */
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  /* CRITICAL: Do NOT set overflow:hidden — the native date picker must
+     be able to render its popup outside the pill boundary. */
+  overflow: visible;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.floating-input-bar--focused,
+.floating-input-bar:focus-within {
+  box-shadow: 0 12px 40px rgba(74, 107, 83, 0.12), 0 2px 8px rgba(74, 107, 83, 0.08);
+  border-color: rgba(74, 107, 83, 0.28);
+}
+.dark .floating-input-bar--focused,
+.dark .floating-input-bar:focus-within {
+  box-shadow: 0 12px 40px rgba(143, 185, 150, 0.10), 0 2px 8px rgba(0, 0, 0, 0.2);
+  border-color: rgba(143, 185, 150, 0.22);
+}
+
+/* Quick-chip: pill wrapper for inline select/date controls */
+.quick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 9999px;
+  padding: 4px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  /* Ensure the native date picker is not clipped */
+  position: relative;
+  overflow: visible;
+}
+
+/* ─── Buttons ────────────────────────────────────── */
+.btn-sage {
+  background-color: var(--color-accent);
+  color: white;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 18px;
+  transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 4px rgba(74, 107, 83, 0.25);
+}
+.btn-sage:hover { background-color: var(--color-accent-hover); box-shadow: 0 2px 8px rgba(74, 107, 83, 0.3); }
+.btn-sage:active { transform: scale(0.96); }
+.dark .btn-sage { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
+
+/* ─── Select / Input Overrides ───────────────────── */
+select option {
+  background-color: var(--color-surface-1);
+  color: var(--color-text-primary);
+}
+
+/* ─── Recharts Tooltip ───────────────────────────── */
 :root {
-  --tooltip-bg: #ffffff;
-  --tooltip-border: #e2e5e9;
-  --tooltip-text: #1a1a2e;
+  --tooltip-bg: #FFFFFF;
+  --tooltip-border: rgba(0,0,0,0.08);
+  --tooltip-text: #1E2320;
 }
 .dark {
-  --tooltip-bg: #1e1e2a;
-  --tooltip-border: #2a2a3a;
-  --tooltip-text: #e8eaed;
+  --tooltip-bg: #252C28;
+  --tooltip-border: rgba(255,255,255,0.08);
+  --tooltip-text: #E8EFEA;
 }
-.dark .recharts-tooltip-item { color: #e8eaed !important; }
-.dark .recharts-tooltip-label { color: #e8eaed !important; }
+.dark .recharts-tooltip-item  { color: #E8EFEA !important; }
+.dark .recharts-tooltip-label { color: #E8EFEA !important; }
 .recharts-tooltip-wrapper { pointer-events: none; }

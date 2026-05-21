@@ -90,7 +90,7 @@ function ProductivityHeatmap() {
             <div className="flex gap-1.5">
               {grid.map((week, wIndex) => (
                 <div key={wIndex} className="flex flex-col gap-1.5">
-                  {week.map((day, dIndex) => (
+                  {week.map((day, _dIndex) => (
                     <div
                       key={day.date}
                       className={clsx(

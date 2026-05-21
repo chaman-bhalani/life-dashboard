@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store';
 import { StickyNote, Check } from 'lucide-react';
-import clsx from 'clsx';
 
 function Scratchpad() {
   const { state, actions } = useStore();
   const [localValue, setLocalValue] = useState(state.scratchpad);
   const [isSaving, setIsSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
-  const timeoutRef = useRef<number>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     setLocalValue(state.scratchpad);
@@ -25,7 +24,7 @@ function Scratchpad() {
     }
 
     timeoutRef.current = window.setTimeout(() => {
-      actions.updateScratchpad(newValue);
+      actions.setScratchpad(newValue);
       setIsSaving(false);
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 2000);

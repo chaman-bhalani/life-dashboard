@@ -1,7 +1,6 @@
 import type { AppState, Task, Habit, MoodEntry } from './types';
 import {
-  format, subDays, subWeeks, addDays, startOfWeek, isToday,
-  isBefore, startOfDay
+  format, subDays, addDays,
 } from 'date-fns';
 
 function randomId(): string {
@@ -18,7 +17,6 @@ function futureDate(daysAhead: number): string {
   return format(d, 'yyyy-MM-dd');
 }
 
-const categories = ['Work', 'Personal', 'Health', 'Learning', 'Finance'] as const;
 const priorities = ['low', 'medium', 'high'] as const;
 const statuses = ['todo', 'in-progress', 'completed'] as const;
 

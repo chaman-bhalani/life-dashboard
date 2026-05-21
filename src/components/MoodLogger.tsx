@@ -103,8 +103,8 @@ function MoodLogger() {
                 boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
               }}
               itemStyle={{ color: 'var(--tooltip-text)' }}
-              formatter={(value: number) => {
-                const mood = MOODS.find((m) => m.level === value);
+              formatter={(value: any) => {
+                const mood = MOODS.find((m) => m.level === (value as number));
                 return [mood ? `${mood.emoji} ${mood.label}` : value, 'Mood'];
               }}
             />

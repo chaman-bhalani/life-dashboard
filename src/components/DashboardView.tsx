@@ -17,11 +17,15 @@ function DashboardView() {
   return (
     <div className="animate-slide-up space-y-6">
       <header className="mb-8">
+        <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-3 text-xs font-semibold" style={{ backgroundColor: 'var(--color-accent-soft)', color: 'var(--color-accent)' }}>
+          <span>✦</span>
+          <span>{dateStr}</span>
+        </div>
         <h1 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
           {greeting}
         </h1>
         <p className="mt-2 text-base font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-          It's {dateStr}. Let's see what's on your plate.
+          Let's see what's on your plate today.
         </p>
       </header>
 
