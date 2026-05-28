@@ -9,6 +9,7 @@ import type { Task, Status, Priority, Category } from '../types';
 import TaskList   from './TaskList';
 import KanbanView from './KanbanView';
 import TaskForm   from './TaskForm';
+import CustomDropdown from './CustomDropdown';
 
 // ─── Priority colour for Zap icon in quick-bar ─────────────────────────────
 const PRIORITY_COLORS: Record<Priority, string> = {
@@ -33,8 +34,12 @@ export default function TasksView() {
   const [quickCategory, setQuickCategory] = useState<Category>('Work');
   const [quickDueDate,  setQuickDueDate]  = useState(() => new Date().toISOString().split('T')[0]);
   const [quickFocused,  setQuickFocused]  = useState(false);
+  const [quickPriorityOpen, setQuickPriorityOpen] = useState(false);
+  const [quickCategoryOpen, setQuickCategoryOpen] = useState(false);
   const quickInputRef = useRef<HTMLInputElement>(null);
   const quickDateInputRef = useRef<HTMLInputElement>(null);
+
+  const isQuickBarActive = quickFocused || !!quickTitle || quickPriorityOpen || quickCategoryOpen;
 
   // ─── Filtered + sorted tasks ───────────────────────────────
   const filteredTasks = useMemo(() =>
@@ -201,51 +206,43 @@ export default function TasksView() {
 
           {/* Dropdowns */}
           <div className="flex flex-wrap items-center gap-2">
-            {(
-              [
-                {
-                  value: statusFilter, onChange: (v: string) => setStatusFilter(v as Status | 'all'),
-                  options: [
-                    { value: 'all',         label: 'All Statuses'  },
-                    { value: 'todo',        label: 'To Do'         },
-                    { value: 'in-progress', label: 'In Progress'   },
-                    { value: 'completed',   label: 'Completed'     },
-                  ],
-                },
-                {
-                  value: priorityFilter, onChange: (v: string) => setPriorityFilter(v as Priority | 'all'),
-                  options: [
-                    { value: 'all',    label: 'All Priorities' },
-                    { value: 'low',    label: 'Low'            },
-                    { value: 'medium', label: 'Medium'         },
-                    { value: 'high',   label: 'High'           },
-                  ],
-                },
-                {
-                  value: categoryFilter, onChange: (v: string) => setCategoryFilter(v as Category | 'all'),
-                  options: [
-                    { value: 'all',      label: 'All Categories' },
-                    { value: 'Work',     label: 'Work'           },
-                    { value: 'Personal', label: 'Personal'       },
-                    { value: 'Health',   label: 'Health'         },
-                    { value: 'Learning', label: 'Learning'       },
-                    { value: 'Finance',  label: 'Finance'        },
-                  ],
-                },
-              ] as const
-            ).map((sel, i) => (
-              <select
-                key={i}
-                value={sel.value}
-                onChange={(e) => (sel.onChange as (v: string) => void)(e.target.value)}
-                className="cursor-pointer appearance-none rounded-xl border px-3 py-2.5 text-sm outline-none transition-colors"
-                style={ctrlStyle}
-              >
-                {sel.options.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            ))}
+            <CustomDropdown
+              value={statusFilter}
+              onChange={(v) => setStatusFilter(v as Status | 'all')}
+              options={[
+                { value: 'all',         label: 'All Statuses'  },
+                { value: 'todo',        label: 'To Do'         },
+                { value: 'in-progress', label: 'In Progress'   },
+                { value: 'completed',   label: 'Completed'     },
+              ]}
+              triggerClassName="!bg-[var(--color-surface-2)] !border-[var(--color-border-subtle)] !text-[var(--color-text-primary)] hover:!border-black/15 dark:hover:!border-white/15"
+            />
+
+            <CustomDropdown
+              value={priorityFilter}
+              onChange={(v) => setPriorityFilter(v as Priority | 'all')}
+              options={[
+                { value: 'all',    label: 'All Priorities' },
+                { value: 'low',    label: 'Low', icon: <Zap className="h-3 w-3" style={{ color: PRIORITY_COLORS.low }} /> },
+                { value: 'medium', label: 'Medium', icon: <Zap className="h-3 w-3" style={{ color: PRIORITY_COLORS.medium }} /> },
+                { value: 'high',   label: 'High', icon: <Zap className="h-3 w-3" style={{ color: PRIORITY_COLORS.high }} /> },
+              ]}
+              triggerClassName="!bg-[var(--color-surface-2)] !border-[var(--color-border-subtle)] !text-[var(--color-text-primary)] hover:!border-black/15 dark:hover:!border-white/15"
+            />
+
+            <CustomDropdown
+              value={categoryFilter}
+              onChange={(v) => setCategoryFilter(v as Category | 'all')}
+              options={[
+                { value: 'all',      label: 'All Categories' },
+                { value: 'Work',     label: 'Work'           },
+                { value: 'Personal', label: 'Personal'       },
+                { value: 'Health',   label: 'Health'         },
+                { value: 'Learning', label: 'Learning'       },
+                { value: 'Finance',  label: 'Finance'        },
+              ]}
+              triggerClassName="!bg-[var(--color-surface-2)] !border-[var(--color-border-subtle)] !text-[var(--color-text-primary)] hover:!border-black/15 dark:hover:!border-white/15"
+            />
 
             {(statusFilter !== 'all' || priorityFilter !== 'all' || categoryFilter !== 'all' || searchQuery) && (
               <button
@@ -298,7 +295,7 @@ export default function TasksView() {
       <div
         className={clsx(
           'floating-input-bar',
-          quickFocused && 'floating-input-bar--focused'
+          isQuickBarActive && 'floating-input-bar--focused'
         )}
         // Stop click from bubbling in case it's inside a scroll container
         onClick={(e) => e.stopPropagation()}
@@ -322,46 +319,43 @@ export default function TasksView() {
         <div
           className={clsx(
             'flex shrink-0 items-center gap-1.5 transition-all duration-200',
-            quickFocused || quickTitle
+            isQuickBarActive
               ? 'pointer-events-auto translate-x-0 opacity-100'
               : 'pointer-events-none translate-x-3 opacity-0'
           )}
         >
           {/* Priority */}
-          <label className="quick-chip" style={{ backgroundColor: 'var(--color-accent-soft)' }}>
-            <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: PRIORITY_COLORS[quickPriority] }} />
-            <select
-              value={quickPriority}
-              onChange={(e) => setQuickPriority(e.target.value as Priority)}
-              onFocus={() => setQuickFocused(true)}
-              onBlur={() => setQuickFocused(false)}
-              className="cursor-pointer appearance-none bg-transparent text-[11px] font-semibold outline-none"
-              style={{ color: PRIORITY_COLORS[quickPriority] }}
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-          </label>
+          <CustomDropdown
+            value={quickPriority}
+            onChange={(v) => setQuickPriority(v as Priority)}
+            onOpenChange={setQuickPriorityOpen}
+            options={[
+              { value: 'low', label: 'Low', icon: <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: PRIORITY_COLORS.low }} /> },
+              { value: 'medium', label: 'Medium', icon: <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: PRIORITY_COLORS.medium }} /> },
+              { value: 'high', label: 'High', icon: <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: PRIORITY_COLORS.high }} /> },
+            ]}
+            size="sm"
+            direction="up"
+            triggerClassName="!bg-[var(--color-accent-soft)] !border-none !rounded-full !px-3 !py-1.5 hover:!bg-[var(--color-surface-2)]"
+          />
 
           {/* Category */}
-          <label className="quick-chip" style={{ backgroundColor: 'var(--color-surface-2)' }}>
-            <Tag className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--color-text-muted)' }} />
-            <select
-              value={quickCategory}
-              onChange={(e) => setQuickCategory(e.target.value as Category)}
-              onFocus={() => setQuickFocused(true)}
-              onBlur={() => setQuickFocused(false)}
-              className="cursor-pointer appearance-none bg-transparent text-[11px] font-semibold outline-none"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              <option>Work</option>
-              <option>Personal</option>
-              <option>Health</option>
-              <option>Learning</option>
-              <option>Finance</option>
-            </select>
-          </label>
+          <CustomDropdown
+            value={quickCategory}
+            onChange={(v) => setQuickCategory(v as Category)}
+            onOpenChange={setQuickCategoryOpen}
+            options={[
+              { value: 'Work', label: 'Work' },
+              { value: 'Personal', label: 'Personal' },
+              { value: 'Health', label: 'Health' },
+              { value: 'Learning', label: 'Learning' },
+              { value: 'Finance', label: 'Finance' },
+            ]}
+            size="sm"
+            direction="up"
+            triggerClassName="!bg-[var(--color-surface-2)] !border-none !rounded-full !px-3 !py-1.5 hover:!bg-[var(--color-surface-1)]"
+            labelPrefix={<Tag className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--color-text-muted)' }} />}
+          />
 
           {/* Due date
               - Fixed width avoids the native date picker from

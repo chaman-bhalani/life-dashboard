@@ -5,6 +5,6 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    allowedHosts: ["watson-hello-half-sells.trycloudflare.com"],
+    allowedHosts: ["buf-slow-interview-twins.trycloudflare.com"],
   },
 });

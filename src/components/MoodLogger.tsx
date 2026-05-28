@@ -17,7 +17,15 @@ const MOODS: { level: MoodLevel; emoji: string; label: string }[] = [
 function MoodLogger() {
   const { state, actions } = useStore();
 
-  const todayStr = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+  // Use local timezone for today's date (matches store.tsx logMood)
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }, []);
+
   const todayMood = state.moods.find((m) => m.date === todayStr);
 
   const chartData = useMemo(() => {
@@ -38,6 +46,9 @@ function MoodLogger() {
     return data;
   }, [state.moods]);
 
+  // Check if we have any mood data points at all
+  const hasData = chartData.some((d) => d.mood !== null);
+
   return (
     <div className="nb-card p-6">
       <div className="mb-5 flex items-center gap-3">
@@ -49,6 +60,7 @@ function MoodLogger() {
         </h2>
       </div>
 
+      {/* Mood selector emojis */}
       <div className="mb-5 flex items-center justify-center gap-2">
         {MOODS.map((m) => {
           const isSelected = todayMood?.level === m.level;
@@ -60,13 +72,15 @@ function MoodLogger() {
               className={clsx(
                 'flex h-12 w-12 items-center justify-center rounded-full text-2xl transition-all duration-200',
                 isSelected
-                  ? 'scale-110 ring-2'
+                  ? 'scale-110'
                   : 'opacity-60 hover:scale-105 hover:opacity-100'
               )}
               style={{
-                boxShadow: isSelected ? '0 0 0 4px var(--color-surface-1), 0 0 0 6px var(--color-accent)' : undefined
+                boxShadow: isSelected ? '0 0 0 3px var(--color-surface-1), 0 0 0 5px var(--color-accent)' : undefined,
+                backgroundColor: isSelected ? 'var(--color-accent-soft)' : undefined,
               }}
               aria-label={`Log mood: ${m.label}`}
+              aria-pressed={isSelected}
             >
               {m.emoji}
             </button>
@@ -74,51 +88,71 @@ function MoodLogger() {
         })}
       </div>
 
+      {/* Today's mood label */}
+      {todayMood && (
+        <p className="mb-4 text-center text-xs font-semibold" style={{ color: 'var(--color-accent)' }}>
+          Today: {MOODS.find((m) => m.level === todayMood.level)?.emoji}{' '}
+          {MOODS.find((m) => m.level === todayMood.level)?.label}
+        </p>
+      )}
+
+      {/* Chart area */}
       <div style={{ width: '100%', height: 144 }}>
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-          <LineChart data={chartData}>
-            <XAxis
-              dataKey="label"
-              tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
-              tickLine={false}
-              axisLine={false}
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              domain={[1, 5]}
-              ticks={[1, 2, 3, 4, 5]}
-              tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
-              tickLine={false}
-              axisLine={false}
-              width={20}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'var(--tooltip-bg)',
-                border: '1px solid var(--tooltip-border)',
-                borderRadius: '12px',
-                fontSize: '12px',
-                color: 'var(--tooltip-text)',
-                padding: '8px 12px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-              }}
-              itemStyle={{ color: 'var(--tooltip-text)' }}
-              formatter={(value: any) => {
-                const mood = MOODS.find((m) => m.level === (value as number));
-                return [mood ? `${mood.emoji} ${mood.label}` : value, 'Mood'];
-              }}
-            />
-            <Line
-              type="monotone"
-              dataKey="mood"
-              stroke="var(--color-accent)"
-              strokeWidth={2.5}
-              dot={{ fill: 'var(--color-accent)', strokeWidth: 0, r: 3 }}
-              activeDot={{ fill: 'var(--color-accent)', strokeWidth: 0, r: 5 }}
-              connectNulls
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        {hasData ? (
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+            <LineChart data={chartData}>
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
+                tickLine={false}
+                axisLine={false}
+                interval="preserveStartEnd"
+              />
+              <YAxis
+                domain={[1, 5]}
+                ticks={[1, 2, 3, 4, 5]}
+                tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
+                tickLine={false}
+                axisLine={false}
+                width={20}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'var(--tooltip-bg)',
+                  border: '1px solid var(--tooltip-border)',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  color: 'var(--tooltip-text)',
+                  padding: '8px 12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                }}
+                itemStyle={{ color: 'var(--tooltip-text)' }}
+                formatter={(value: any) => {
+                  const mood = MOODS.find((m) => m.level === (value as number));
+                  return [mood ? `${mood.emoji} ${mood.label}` : value, 'Mood'];
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="mood"
+                stroke="var(--color-accent)"
+                strokeWidth={2.5}
+                dot={{ fill: 'var(--color-accent)', strokeWidth: 0, r: 5 }}
+                activeDot={{ fill: 'var(--color-accent)', strokeWidth: 0, r: 7 }}
+                connectNulls
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div
+            className="flex h-full flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed"
+            style={{ borderColor: 'var(--color-border-subtle)', color: 'var(--color-text-muted)' }}
+          >
+            <Heart className="h-6 w-6 opacity-30" />
+            <p className="text-xs font-medium">No mood data yet</p>
+            <p className="text-[11px]">Click an emoji above to log today's mood</p>
+          </div>
+        )}
       </div>
     </div>
   );

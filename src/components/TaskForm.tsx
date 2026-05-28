@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import type { Task, Priority, Status, Category } from '../types';
+import CustomDropdown from './CustomDropdown';
 
 interface TaskFormProps {
   task?: Task;
@@ -125,18 +126,20 @@ export default function TaskForm({ task, onClose, onSave }: TaskFormProps) {
 
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Category</label>
-                <select
+                <CustomDropdown
                   value={category}
-                  onChange={(e) => setCategory(e.target.value as Category)}
-                  className="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors"
-                  style={inputStyle}
-                >
-                  <option value="Work">Work</option>
-                  <option value="Personal">Personal</option>
-                  <option value="Health">Health</option>
-                  <option value="Learning">Learning</option>
-                  <option value="Finance">Finance</option>
-                </select>
+                  onChange={(v) => setCategory(v as Category)}
+                  options={[
+                    { value: 'Work', label: 'Work' },
+                    { value: 'Personal', label: 'Personal' },
+                    { value: 'Health', label: 'Health' },
+                    { value: 'Learning', label: 'Learning' },
+                    { value: 'Finance', label: 'Finance' },
+                  ]}
+                  className="w-full"
+                  triggerClassName="!w-full !px-4 !py-2.5 hover:!border-black/15 dark:hover:!border-white/15"
+                  menuClassName="!w-full"
+                />
               </div>
 
               <div>
@@ -168,16 +171,18 @@ export default function TaskForm({ task, onClose, onSave }: TaskFormProps) {
             {task && (
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Status</label>
-                <select
+                <CustomDropdown
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as Status)}
-                  className="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors"
-                  style={inputStyle}
-                >
-                  <option value="todo">To Do</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                </select>
+                  onChange={(v) => setStatus(v as Status)}
+                  options={[
+                    { value: 'todo', label: 'To Do' },
+                    { value: 'in-progress', label: 'In Progress' },
+                    { value: 'completed', label: 'Completed' },
+                  ]}
+                  className="w-full"
+                  triggerClassName="!w-full !px-4 !py-2.5 hover:!border-black/15 dark:hover:!border-white/15"
+                  menuClassName="!w-full"
+                />
               </div>
             )}
           </div>

@@ -8,8 +8,9 @@ import {
   PanelLeftClose,
   PanelLeft,
   Leaf,
+  LogOut,
 } from 'lucide-react';
-import { useStore } from '../store';
+import { useStore, useSignOut } from '../store';
 import type { NavSection } from '../types';
 import clsx from 'clsx';
 
@@ -23,6 +24,7 @@ const navItems: { id: NavSection; label: string; icon: typeof LayoutDashboard }[
 export default function Sidebar() {
   const { state, actions } = useStore();
   const { theme, activeSection, sidebarCollapsed } = state;
+  const signOut = useSignOut();
 
   return (
     <aside
@@ -166,6 +168,28 @@ export default function Sidebar() {
             <PanelLeftClose className="h-[18px] w-[18px] shrink-0" />
           )}
           {!sidebarCollapsed && <span>Collapse</span>}
+        </button>
+
+        {/* Sign Out */}
+        <button
+          onClick={() => signOut()}
+          className={clsx(
+            'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-150',
+            sidebarCollapsed && 'justify-center px-0'
+          )}
+          style={{ color: 'var(--color-text-secondary)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)';
+            e.currentTarget.style.color = '#ef4444';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = 'var(--color-text-secondary)';
+          }}
+          aria-label="Sign out"
+        >
+          <LogOut className="h-[18px] w-[18px] shrink-0" />
+          {!sidebarCollapsed && <span>Sign Out</span>}
         </button>
       </div>
     </aside>

@@ -49,6 +49,8 @@ export interface AppActions {
   addTask: (task: Omit<Task, 'id' | 'createdAt'>) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
+  addHabit: (name: string, icon: string) => void;
+  deleteHabit: (habitId: string) => void;
   toggleHabit: (habitId: string, date: string) => void;
   updateHabitName: (habitId: string, name: string) => void;
   logMood: (level: MoodLevel) => void;
